@@ -1,11 +1,12 @@
 const superagent = require('superagent');
 const cheerio = require('cheerio');
 
-const conf = require('./config/defaultConfig');
+const defaultConfig = require('./config/defaultConfig');
+const send = require('./utils/send');
 
 class Server {
   constructor(config) {
-    this.conf = Object.assign({}, conf, config);
+    this.conf = Object.assign({}, defaultConfig, config);
   }
 
   getForecast() {
@@ -20,6 +21,8 @@ class Server {
           let obj = {
             weather: $(target).find('li')[1].children[2].data.replace(/(^\s*)|(\s*$)/g, ""),
             temp: $(target).find('li')[2].children[0].data,
+            tips: $('.wea_tips em').text(),
+            location: conf.location,
           }
           resolve(obj);
         });
@@ -44,10 +47,25 @@ class Server {
     });
   }
 
+  async getInfo() {
+    let that = this;
+    await Promise.all([this.getForecast(), this.getAphorism()]).then((values) => {
+      that.forecast = values[0];
+      that.aphorism = values[1];
+    });
+  }
+
+  send() {
+    send(this.conf, {
+      info: {
+        ...this.forecast,
+        ...this.aphorism,
+      }
+    });
+  }
+
   start() {
-    Promise.all([this.getForecast(), this.getAphorism()]).then((values) => {
-      console.log(values);
-    })
+    console.log(this.forecast, this.aphorism);
   }
 }
 

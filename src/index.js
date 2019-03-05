@@ -14,4 +14,9 @@ const argv = yargs
   .argv;
 
 const server = new Server(argv);
-server.start();
+new Promise(async function (resolve, reject) {
+  await server.getInfo();
+  resolve();
+}).then(() => {
+  server.send();
+});
