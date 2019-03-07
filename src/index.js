@@ -1,5 +1,6 @@
 const yargs = require('yargs');
 const Server = require('./app');
+var schedule = require('node-schedule');
 
 const argv = yargs
   .usage('nodeMsg [options]')
@@ -14,9 +15,11 @@ const argv = yargs
   .argv;
 
 const server = new Server(argv);
-new Promise(async function (resolve, reject) {
-  await server.getInfo();
-  resolve();
-}).then(() => {
-  server.send();
+let timer = schedule.scheduleJob('* 30 6 * * *', function () {
+  new Promise(async function (resolve, reject) {
+    await server.getInfo();
+    resolve();
+  }).then(() => {
+    server.send();
+  });
 });
