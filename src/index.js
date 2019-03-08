@@ -1,6 +1,6 @@
 const yargs = require('yargs');
 const Server = require('./app');
-var schedule = require('node-schedule');
+const timer = require('./utils/timer');
 
 const argv = yargs
   .usage('nodeMsg [options]')
@@ -13,12 +13,10 @@ const argv = yargs
     alias: 'to',
     describe: '发送至指定邮箱',
   })
-  .option('n', {
-    alias: 'now',
-    describe: '立即发送',
-    type: 'boolean',
-    default: false,
-    demand: true,
+  .option('k', {
+    alias: 'keep',
+    describe: '定时发送（Cron风格定时器）',
+    default: ''
   })
   .alias('v', 'version')
   .version()
@@ -26,7 +24,7 @@ const argv = yargs
   .argv;
 
 const server = new Server(argv);
-if (argv.now) {
+timer(argv.keep, () => {
   new Promise(async function (resolve, reject) {
     await server.getInfo();
     setTimeout(() => {
@@ -35,15 +33,4 @@ if (argv.now) {
   }).then(() => {
     server.send();
   });
-} else {
-  let timer = schedule.scheduleJob('* 30 6 * * *', function () {
-    new Promise(async function (resolve, reject) {
-      await server.getInfo();
-      setTimeout(() => {
-        resolve();
-      }, 5000);
-    }).then(() => {
-      server.send();
-    });
-  });
-}
+})
